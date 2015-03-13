@@ -9,22 +9,15 @@ function independentSubmitFcn(cluster, job, props, ...
 % See also parallel.cluster.generic.independentDecodeFcn.
 %
 
-% Copyright 2010-2013 The MathWorks, Inc.
-
-% Store the current filename for the errors, warnings and dctSchedulerMessages
-currFilename = mfilename;
-if ~isa(cluster, 'parallel.Cluster')
-    error('parallelexamples:GenericPBS:SubmitFcnError', ...
-        'The function %s is for use with clusters created using the parcluster command.', currFilename)
-end
+% Copyright 2010-2011 The MathWorks, Inc.
 
 decodeFunction = 'parallel.cluster.generic.independentDecodeFcn';
-
+% Store the current filename for the dctSchedulerMessages
+currFilename = mfilename;
 if cluster.HasSharedFilesystem
     error('parallelexamples:GenericPBS:SubmitFcnError', ...
         'The submit function %s is for use with nonshared filesystems.', currFilename)
 end
-
 if ~strcmpi(cluster.OperatingSystem, 'unix')
     error('parallelexamples:GenericPBS:SubmitFcnError', ...
         'The submit function %s only supports clusters with unix OS.', currFilename)
@@ -49,14 +42,7 @@ variables = {'MDCE_DECODE_FUNCTION', decodeFunction; ...
     'MDCE_MATLAB_EXE', props.MatlabExecutable; ... 
     'MDCE_MATLAB_ARGS', matlabArguments; ...
     'MDCE_DEBUG', 'true'; ...
-    'MLM_WEB_LICENSE', props.UseMathworksHostedLicensing; ...
-    'MLM_WEB_USER_CRED', props.UserToken; ...
-    'MLM_WEB_ID', props.LicenseWebID; ...
-    'MDCE_LICENSE_NUMBER', props.LicenseNumber; ...
     'MDCE_STORAGE_LOCATION', remoteJobStorageLocation};
-% Trim the environment variables of empty values.
-nonEmptyValues = cellfun(@(x) ~isempty(strtrim(x)), variables(:,2));
-variables = variables(nonEmptyValues, :);
 
 
 
@@ -119,7 +105,38 @@ for ii = 1:numberOfTasks
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % You may also with to supply additional submission arguments to 
     % the qsub command here.
-    additionalSubmitArgs = '';
+
+    % I'm going to mimic the way I do things in communicatingSubmitFcn.m,
+    % but am explicitly assuming each task gets a single core
+    additionalSubmitArgs = '-l nodes=1:ppn=1';
+
+    % What walltime to request in the batch script
+    global CHPC_WALLTIME
+    my_walltime = '4:00:00';
+    if (numel(CHPC_WALLTIME)>1) 
+      my_walltime = CHPC_WALLTIME;
+    end
+    additionalSubmitArgs = strcat(additionalSubmitArgs,',walltime=',my_walltime);
+
+    % Use this if we're over-riding the default memory request
+    global CHPC_VMEM
+    if (CHPC_VMEM>1000) 
+      my_vmem=num2str(CHPC_VMEM);
+      additionalSubmitArgs = strcat(additionalSubmitArgs,',vmem=',my_vmem,'mb');
+    end
+
+    % Route jobs to either the SMP or iDataPlex (the default) nodes
+    global CHPC_NODE_TYPE
+    if (strcmpi(CHPC_NODE_TYPE,'SMP')) 
+      queue = 'matlab_smp'; 
+    else
+      queue = 'matlab';
+    end
+    additionalSubmitArgs = strcat(additionalSubmitArgs,' -q ', queue);
+
+    % Finally, add the option for requesting the licenses
+    additionalSubmitArgs = strcat(additionalSubmitArgs,' -W x=GRES:MATLAB_Distrib_Comp_Engine+1');
+
     % Create a script to submit a PBS job - this will be created in the job directory
     dctSchedulerMessage(5, '%s: Generating script for task %i', currFilename, ii);
     localScriptName = tempname(localJobDirectory);

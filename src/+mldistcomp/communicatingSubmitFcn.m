@@ -9,17 +9,13 @@ function communicatingSubmitFcn(cluster, job, props, ...
 % See also parallel.cluster.generic.communicatingDecodeFcn.
 %
 
-% Copyright 2010-2013 The MathWorks, Inc.
-
-% Store the current filename for the errors, warnings and dctSchedulerMessages
-currFilename = mfilename;
-if ~isa(cluster, 'parallel.Cluster')
-    error('parallelexamples:GenericPBS:SubmitFcnError', ...
-        'The function %s is for use with clusters created using the parcluster command.', currFilename)
-end
+% Copyright 2010-2011 The MathWorks, Inc.
 
 decodeFunction = 'parallel.cluster.generic.communicatingDecodeFcn';
 
+
+% Store the current filename for the dctSchedulerMessages
+currFilename = mfilename;
 if cluster.HasSharedFilesystem
     error('parallelexamples:GenericPBS:SubmitFcnError', ...
         'The submit function %s is for use with nonshared filesystems.', currFilename)
@@ -49,16 +45,9 @@ variables = {'MDCE_DECODE_FUNCTION', decodeFunction; ...
     'MDCE_MATLAB_EXE', props.MatlabExecutable; ... 
     'MDCE_MATLAB_ARGS', matlabArguments; ...
     'MDCE_DEBUG', 'true'; ...
-    'MLM_WEB_LICENSE', props.UseMathworksHostedLicensing; ...
-    'MLM_WEB_USER_CRED', props.UserToken; ...
-    'MLM_WEB_ID', props.LicenseWebID; ...
-    'MDCE_LICENSE_NUMBER', props.LicenseNumber; ...
     'MDCE_STORAGE_LOCATION', remoteJobStorageLocation; ...
     'MDCE_CMR', cluster.ClusterMatlabRoot; ...
     'MDCE_TOTAL_TASKS', num2str(props.NumberOfTasks)};
-% Trim the environment variables of empty values.
-nonEmptyValues = cellfun(@(x) ~isempty(strtrim(x)), variables(:,2));
-variables = variables(nonEmptyValues, :);
 
 
 
@@ -110,11 +99,51 @@ end
 % You may wish to customize this section to match your cluster, 
 % for example if you wish to limit the number of nodes that 
 % can be used for a single job.
-procsPerNode = 2;
+procsPerNode = 8;
 numberOfNodes = ceil(props.NumberOfTasks/procsPerNode);
-% You may also with to supply additional submission arguments to 
-% the qsub command here.
-additionalSubmitArgs = sprintf('-l nodes=%d:ppn=%d', numberOfNodes, procsPerNode);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% We'll slowly build up the submit argument list depending on 
+% what environmental variables are passed in.
+
+% Use slighly different logic if we're asking for less than 1 whole node
+if (props.NumberOfTasks < procsPerNode)
+  additionalSubmitArgs = sprintf('-l nodes=%d:ppn=%d', numberOfNodes, props.NumberOfTasks);
+else
+  additionalSubmitArgs = sprintf('-l nodes=%d:ppn=%d', numberOfNodes, procsPerNode);
+end
+
+% What walltime to request in the batch script
+global CHPC_WALLTIME
+my_walltime = '4:00:00';
+if (numel(CHPC_WALLTIME)>1) 
+  my_walltime = CHPC_WALLTIME;
+end
+additionalSubmitArgs = strcat(additionalSubmitArgs,',walltime=',my_walltime);
+
+% Use this if we're over-riding the default memory request
+global CHPC_VMEM
+if (CHPC_VMEM>1000) 
+  my_vmem=num2str(CHPC_VMEM);
+  additionalSubmitArgs = strcat(additionalSubmitArgs,',vmem=',my_vmem,'mb');
+end
+
+% Route jobs to either the SMP or iDataPlex (the default) nodes
+global CHPC_NODE_TYPE
+if (strcmpi(CHPC_NODE_TYPE,'SMP')) 
+  queue = 'matlab_smp'; 
+ else
+  queue = 'matlab';
+end
+additionalSubmitArgs = strcat(additionalSubmitArgs,' -q ', queue);
+
+% Finally, add the option for requesting the licenses
+my_licenses = num2str(props.NumberOfTasks)
+additionalSubmitArgs = strcat(additionalSubmitArgs,' -W x=GRES:MATLAB_Distrib_Comp_Engine+', my_licenses);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 dctSchedulerMessage(4, '%s: Requesting %d nodes with %d processors per node', currFilename, ...
     numberOfNodes, procsPerNode);
 % Create a script to submit a PBS job - this will be created in the job directory
