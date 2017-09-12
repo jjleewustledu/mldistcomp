@@ -13,9 +13,23 @@ classdef Test_CHPC < matlab.unittest.TestCase
 	properties
  		registry
  		testObj
+        testChpcLoc = '/scratch/jjlee/raichle/PPGdata/jjlee2/HYGLY28/V1'
+        testFile
  	end
 
 	methods (Test)
+        function test_rsync(this)
+            this.testObj.rsync(this.testFile, this.testChpcLoc);
+            delete(this.testFile);
+            this.testObj.rsync(fullfile(this.testChpcLoc, this.testFile), pwd, 'chpcIsSource', true);
+            this.verifyTrue(lexist(this.testFile));   
+            
+            this.testObj_.ssh(['rm ' fullfile(this.testChpcLoc, this.testFile)]);
+        end
+        function test_ssh(this)
+            [~,r] = this.testObj.ssh(['ls -d ' this.testChpcLoc]);
+            this.verifyEqual(this.testChpcLoc, strtrim(r));
+        end
 		function test_pushData(this)
  			import mldistcomp.*;
             pwd0 = pushd(this.testObj.vLocation);
@@ -42,25 +56,36 @@ classdef Test_CHPC < matlab.unittest.TestCase
 		function setupCHPC(this)
  			import mldistcomp.*;
             studyd = mlraichle.StudyData;
-            sessp = fullfile(getenv('PPG'), 'jjlee', 'HYGLY28', '');
-            sessd = mlraichle.SessionData('studyData', studyd, 'sessionPath', sessp, 'vnumber', 2);
- 			this.testObj_ = CHPC(sessd);
+            sessp = fullfile(mlraichle.RaichleRegistry.instance.subjectsDir, 'HYGLY28', '');
+            sessd = mlraichle.SessionData('studyData', studyd, 'sessionPath', sessp);
+ 			this.testObj_ = CHPC('sessionData', sessd);
+            
+            this.pwd0_ = pushd(this.testObj_.sessionData.vLocation);
+            this.testFile = ['testFile_' datestr(now, 30) '.touch'];
+            mlbash(['touch ' this.testFile])
+ 			this.addTeardown(@this.cleanFiles);
  		end
 	end
 
  	methods (TestMethodSetup)
 		function setupCHPCTest(this)
  			this.testObj = this.testObj_;
- 			this.addTeardown(@this.cleanFiles);
  		end
 	end
 
 	properties (Access = private)
  		testObj_
+        pwd0_
  	end
 
 	methods (Access = private)
 		function cleanFiles(this)
+            try
+                deleteExisting(this.testFile);
+            catch ME
+                handexcept(ME);
+            end
+            popd(this.pwd0_);
  		end
 	end
 
