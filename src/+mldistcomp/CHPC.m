@@ -151,7 +151,7 @@ classdef CHPC
             addRequired( ip, 'theDeployedDirector', @(x) ~isempty(x));
             addParameter(ip, 'distcompHost', 'chpc_remote_r2016a', @ischar);
             addParameter(ip, 'memUsage', '32000', @ischar);
-            addParameter(ip, 'wallTime', '02:00:00', @ischar);
+            addParameter(ip, 'wallTime', '12:00:00', @ischar);
             addParameter(ip, 'sessionData', @(x) isa(x, 'mlpipeline.SessionData'));
             addParameter(ip, 'subjectsDirModScratch', this.SUBJECTS_DIR_MOD_SCRATCH, @ischar);
             parse(ip, varargin{:});
@@ -166,6 +166,7 @@ classdef CHPC
             ClusterInfo.setEmailAddress('jjlee.wustl.edu@gmail.com');
             ClusterInfo.setMemUsage(ip.Results.memUsage);
             ClusterInfo.setWallTime(ip.Results.wallTime);
+            ClusterInfo.setPrivateKeyFile('/home/usr/jjlee/.ssh/id_rsa');
         end
     end 
     
