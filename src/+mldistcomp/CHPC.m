@@ -89,8 +89,14 @@ classdef CHPC
             assert(ischar(aDir));
             [s,r] = mlbash(sprintf('ssh %s ''mkdir -p %s''', mldistcomp.CHPC.LOGIN_HOSTNAME, aDir));
         end 
+        function [s,r] = sshRm(aDir)
+            %  @param aDir is the directory to make at CHPC.
+            
+            assert(ischar(aDir));
+            [s,r] = mlbash(sprintf('ssh %s ''rm -r %s''', mldistcomp.CHPC.LOGIN_HOSTNAME, aDir));
+        end 
         
-        function subjD = chpcSubjectsDir(obj)
+        function subjD = repSubjectsDir(obj)
             if (isa(obj, 'mlpipeline.SessionData'))
                 obj = obj.subjectsDir;
             end
@@ -118,7 +124,7 @@ classdef CHPC
             assert(isa(s, 'mlpipeline.SessionData'));
             this.chpcSessionData_ = s;
             this.chpcSessionData_.allowDirNotYetExisting = true;
-            this.chpcSessionData_.subjectsDir = this.chpcSubjectsDir(this.chpcSessionData_);            
+            this.chpcSessionData_.subjectsDir = this.repSubjectsDir(this.chpcSessionData_);            
         end
         
         %%
