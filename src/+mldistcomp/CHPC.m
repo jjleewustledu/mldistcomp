@@ -154,11 +154,11 @@ classdef CHPC
             %  @param subjectsDirModScratch := subjectsDir - (subjectsDir && this.SCRATCH_LOCATION)
             
             ip = inputParser;
-            addRequired( ip, 'theDeployedDirector', @(x) ~isempty(x));
+            addOptional( ip, 'theDeployedDirector', []);
             addParameter(ip, 'distcompHost', 'chpc_remote_r2016a', @ischar);
             addParameter(ip, 'memUsage', '32000', @ischar);
             addParameter(ip, 'wallTime', '12:00:00', @ischar);
-            addParameter(ip, 'sessionData', @(x) isa(x, 'mlpipeline.SessionData'));
+            addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.SessionData') || isempty(x));
             addParameter(ip, 'subjectsDirModScratch', this.SUBJECTS_DIR_MOD_SCRATCH, @ischar);
             parse(ip, varargin{:});
  			
@@ -166,13 +166,15 @@ classdef CHPC
             this.distcompHost_          = ip.Results.distcompHost;
             this.sessionData_           = ip.Results.sessionData;
             this.subjectsDirModScratch_ = ip.Results.subjectsDirModScratch;
-            this.chpcSessionData        = this.sessionData;
+            if (~isempty(this.sessionData))
+                this.chpcSessionData    = this.sessionData;
+            end
             
             this.cluster = parcluster(this.distcompHost_);
             ClusterInfo.setEmailAddress('jjlee.wustl.edu@gmail.com');
             ClusterInfo.setMemUsage(ip.Results.memUsage);
             ClusterInfo.setWallTime(ip.Results.wallTime);
-            ClusterInfo.setPrivateKeyFile('/home/usr/jjlee/.ssh/id_rsa');
+            ClusterInfo.setPrivateKeyFile(fullfile(getenv('HOME'), '.ssh/id_rsa'));
         end
     end 
     
