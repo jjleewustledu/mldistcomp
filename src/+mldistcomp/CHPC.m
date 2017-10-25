@@ -143,7 +143,15 @@ classdef CHPC
             catch ME
                 handwarning(ME, struct2str(ME.stack));
             end
-        end     
+        end    
+        function out   = fetchOutputsSerialProgram(this)
+            try
+                j   = this.job;
+                out = j.fetchOutputs{:};
+            catch ME
+                handwarning(ME, struct2str(ME.stack));
+            end
+        end  
         
  		function this = CHPC(varargin)
  			%% CHPC
