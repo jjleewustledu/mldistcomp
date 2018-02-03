@@ -123,7 +123,6 @@ classdef CHPC
         function this = set.chpcSessionData(this, s)
             assert(isa(s, 'mlpipeline.SessionData'));
             this.chpcSessionData_ = s;
-            this.chpcSessionData_.allowDirNotYetExisting = true;
             this.chpcSessionData_.subjectsDir = this.repSubjectsDir(this.chpcSessionData_);            
         end
         
