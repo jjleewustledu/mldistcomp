@@ -12,9 +12,12 @@ classdef Test_CHPC < matlab.unittest.TestCase
  	
 	properties
  		registry
+        sessd
  		testObj
-        testChpcLoc = '/scratch/jjlee/raichle/PPGdata/jjlee2/HYGLY28/V1'
+        testChpcLoc = '/scratch/jjlee/raichle/PPGdata/jjlee2/HYGLY28/V2'
         testFile
+        test4dfp
+        test4dfpDated
  	end
 
 	methods (Test)
@@ -32,22 +35,22 @@ classdef Test_CHPC < matlab.unittest.TestCase
         end
 		function test_pushData(this)
  			import mldistcomp.*;
-            pwd0 = pushd(this.testObj.vLocation);
+            pwd0 = pushd(this.testObj.sessionData.vLocation);
             this.testObj.pushData( ...
-                'FDG_V2-AC/fdgv2r1_on_resolved_sumt.4dfp.*', ...
-                'FDG_V2-AC');
-            out = this.testObj.ssh('ls /scratch/jjlee/raichle/PPGdata/jjlee/HYGLY28/V2/FDG_V2-AC');
-            this.verifyTrue(lstrfind(out, 'fdgv2r1_on_resolved_sumt.4dfp.img'));
+                ['FDG_V2-AC/' this.test4dfpDated], ...
+                 'FDG_V2-AC');
+            [~,r] = this.testObj.ssh('ls /scratch/jjlee/raichle/PPGdata/jjlee2/HYGLY28/V2/FDG_V2-AC');
+            this.verifyTrue(lstrfind(strtrim(r), this.test4dfpDated));
             popd(pwd0);
  		end
 		function test_pullData(this)
  			import mldistcomp.*;
-            pwd0 = pushd(this.testObj.vLocation);
+            pwd0 = pushd(this.testObj.sessionData.vLocation);
             this.testObj.pullData( ...
-                'FDG_V2-AC/fdgv2r1_on_resolved_sumt.4dfp.*', ...
-                'FDG_V2-AC');
-            out = ls(fullfile(getenv('PPG'), 'jjlee/HYGLY28/V2/FDG_V2-AC'));
-            this.verifyTrue(lstrfind(out, 'fdgv2r1_on_resolved_sumt.4dfp.img'));
+                ['FDG_V2-AC/' this.test4dfp], ...
+                 'FDG_V2-AC');
+            out = ls(fullfile(getenv('PPG'), 'jjlee2/HYGLY28/V2/FDG_V2-AC'));
+            this.verifyTrue(lstrfind(out, this.test4dfp));
             popd(pwd0);
  		end
 	end
@@ -57,8 +60,8 @@ classdef Test_CHPC < matlab.unittest.TestCase
  			import mldistcomp.*;
             studyd = mlraichle.StudyData;
             sessp = fullfile(mlraichle.RaichleRegistry.instance.subjectsDir, 'HYGLY28', '');
-            sessd = mlraichle.SessionData('studyData', studyd, 'sessionPath', sessp);
- 			this.testObj_ = CHPC('sessionData', sessd);
+            this.sessd = mlraichle.SessionData('studyData', studyd, 'sessionPath', sessp, 'vnumber', 2, 'ac', true);
+ 			this.testObj_ = CHPC('sessionData', this.sessd);
             
             this.pwd0_ = pushd(this.testObj_.sessionData.vLocation);
             this.testFile = ['testFile_' datestr(now, 30) '.touch'];
@@ -69,6 +72,11 @@ classdef Test_CHPC < matlab.unittest.TestCase
 
  	methods (TestMethodSetup)
 		function setupCHPCTest(this)
+            this.test4dfp      =         'fdgv2r2_op_fdgv2e1to4r1_frame4_sumt.4dfp.ifh';
+            this.test4dfpDated = sprintf('fdgv2r2_op_fdgv2e1to4r1_frame4_sumt_%s.4dfp.ifh', datestr(now,30));
+            copyfile( ...
+                fullfile(this.sessd.tracerLocation, this.test4dfp), ...
+                fullfile(this.sessd.tracerLocation, this.test4dfpDated));
  			this.testObj = this.testObj_;
  		end
 	end

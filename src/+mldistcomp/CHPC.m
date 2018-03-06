@@ -47,7 +47,7 @@ classdef CHPC
             addRequired( ip, 'src',  @(x) ischar(x) || all(cell2mat(cellfun(@(y) ischar(y), x))));
             addRequired( ip, 'dest', @(x) ischar(x) || all(cell2mat(cellfun(@(y) ischar(y), x))));
             addParameter(ip, 'chpcIsSource', false, @islogical);
-            addParameter(ip, 'options', '-rav --no-l --safe-links -e ssh',  @ischar);
+            addParameter(ip, 'options', '-rav --no-l --safe-links -e ssh --exclude ''*ackup*'' --exclude ''*revious*'' --exclude ''*efects*''',  @ischar);
             parse(ip, varargin{:});
             
             % recursion for cells
@@ -128,7 +128,28 @@ classdef CHPC
         
         %%
         
-        function this  = runSerialProgram(this, varargin)
+        function this = pushData(this, src, targ)
+            import mlraichle.*;
+            csd = this.chpcSessionData;
+            sd  = this.sessionData;
+            try
+                this.rsync(fullfile(sd.vLocation, src), fullfile(csd.vLocation, targ));
+            catch ME
+                dispexcept(ME);
+            end
+        end
+        function this = pullData(this, src, targ)
+            import mlraichle.*;
+            csd = this.chpcSessionData;
+            sd  = this.sessionData;
+            
+            try
+                this.rsync(fullfile(csd.vLocation, src), fullfile(sd.vLocation, targ), 'chpcIsSource', true);
+            catch ME
+                dispexcept(ME);
+            end
+        end
+        function this = runSerialProgram(this, varargin)
             ip = inputParser;
             addRequired(ip, 'factoryMethod', @(x) isa(x, 'function_handle'));
             addOptional(ip, 'factoryArgs', {}, @iscell);
@@ -140,15 +161,15 @@ classdef CHPC
                 this.job = j;
                 %this.fetchedOutputs_ = j.fetchOutputs{:};
             catch ME
-                handwarning(ME, struct2str(ME.stack));
+                dispwarning(ME);
             end
         end    
-        function out   = fetchOutputsSerialProgram(this)
+        function out  = fetchOutputsSerialProgram(this)
             try
                 j   = this.job;
                 out = j.fetchOutputs{:};
             catch ME
-                handwarning(ME, struct2str(ME.stack));
+                dispwarning(ME);
             end
         end  
         
@@ -162,7 +183,7 @@ classdef CHPC
             
             ip = inputParser;
             addOptional( ip, 'theDeployedDirector', []);
-            addParameter(ip, 'distcompHost', 'chpc_remote_r2016a', @ischar);
+            addParameter(ip, 'distcompHost', 'chpc_remote_r2016b', @ischar);
             addParameter(ip, 'memUsage', '32000', @ischar);
             addParameter(ip, 'wallTime', '12:00:00', @ischar);
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.SessionData') || isempty(x));
@@ -177,11 +198,7 @@ classdef CHPC
                 this.chpcSessionData    = this.sessionData;
             end
             
-            this.cluster = parcluster(this.distcompHost_);
-            ClusterInfo.setEmailAddress('jjlee.wustl.edu@gmail.com');
-            ClusterInfo.setMemUsage(ip.Results.memUsage);
-            ClusterInfo.setWallTime(ip.Results.wallTime);
-            ClusterInfo.setPrivateKeyFile(fullfile(getenv('HOME'), '.ssh/id_rsa'));
+            this.cluster = myparcluster(this.distcompHost_);
         end
     end 
     
