@@ -47,7 +47,7 @@ classdef CHPC
             addRequired( ip, 'src',  @(x) ischar(x) || all(cell2mat(cellfun(@(y) ischar(y), x))));
             addRequired( ip, 'dest', @(x) ischar(x) || all(cell2mat(cellfun(@(y) ischar(y), x))));
             addParameter(ip, 'chpcIsSource', false, @islogical);
-            addParameter(ip, 'options', '-rav --no-l --safe-links -e ssh --exclude ''*ackup*'' --exclude ''*revious*'' --exclude ''*efects*''',  @ischar);
+            addParameter(ip, 'options', '-rav --no-l --safe-links -e ssh --exclude ''*ackup*'' --exclude ''*revious*'' --exclude ''*efect*''',  @ischar);
             parse(ip, varargin{:});
             
             % recursion for cells
@@ -185,7 +185,7 @@ classdef CHPC
             addOptional( ip, 'theDeployedDirector', []);
             addParameter(ip, 'distcompHost', 'chpc_remote_r2016b', @ischar);
             addParameter(ip, 'memUsage', '32000', @ischar);
-            addParameter(ip, 'wallTime', '12:00:00', @ischar);
+            addParameter(ip, 'wallTime', '23:00:00', @ischar);
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.SessionData') || isempty(x));
             addParameter(ip, 'subjectsDirModScratch', this.SUBJECTS_DIR_MOD_SCRATCH, @ischar);
             parse(ip, varargin{:});
