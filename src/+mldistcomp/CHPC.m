@@ -158,9 +158,12 @@ classdef CHPC
             
             try
                 j = this.cluster.batch(ip.Results.factoryMethod, ip.Results.nArgout, ip.Results.factoryArgs);
-                this.job = j;
-                %cj = mldistcomp.CHPCJob(this);
-                %save(sprintf('mldistcomp_CHPC_runSerialProgram_%s.mat', this.sessionData.tracerRevision('typ','fqfp')), 'cj');
+                this.job = j
+                cj = mldistcomp.CHPCJob(this);
+                ensuredir(this.sessionData.tracerRevision('typ','path'));
+                save(fullfile(this.sessionData.tracerRevision('typ','path'), ...
+                              sprintf('mldistcomp_CHPC_runSerialProgram_%s.mat', ...
+                              this.sessionData.tracerRevision('typ','fp'))), 'cj');
                 %this.fetchedOutputs_ = j.fetchOutputs{:};
             catch ME
                 dispwarning(ME);
