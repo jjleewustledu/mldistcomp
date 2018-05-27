@@ -34,7 +34,9 @@ classdef CHPC
             %  @param dest is the f.q. path on the cluster at CHPC or cells of the same.
             %  @param named chpcIsSource is logical with default false.
             %  chpcIsSource == true sets src to be at CHPC.  Ignored whenever LOGIN_HOSTNAME is in src or dest.
-            %  @param options are passed to rsync, default '-rav -e ssh'.
+            %  @param named options are passed to rsync, default '-rav -e ssh'.
+            %  @param named exclude enumerates additional exclusion patterns.
+            %  @param named includeListmode is logical.
             %
             %  See also file:///Users/jjlee/Local/bin/rsync_mlcvl.sh
             %          #!/bin/bash                                                                                                             
@@ -44,23 +46,33 @@ classdef CHPC
 
             import mldistcomp.*;
             ip = inputParser;
+            ip.KeepUnmatched = true;
             addRequired( ip, 'src',  @(x) ischar(x) || all(cell2mat(cellfun(@(y) ischar(y), x))));
             addRequired( ip, 'dest', @(x) ischar(x) || all(cell2mat(cellfun(@(y) ischar(y), x))));
             addParameter(ip, 'chpcIsSource', false, @islogical);
             addParameter(ip, 'options', '-rav --no-l --safe-links -e ssh --exclude ''*ackup*'' --exclude ''*revious*'' --exclude ''*efect*''',  @ischar);
+            addParameter(ip, 'exclude', '', @ischar);
+            addParameter(ip, 'includeListmode', true, @islogical);
             parse(ip, varargin{:});
             
-            % recursion for cells
+            % flat recursion for cells
             if (iscell(ip.Results.src))
                 assert(iscell(ip.Results.dest));
                 assert(length(ip.Results.src) == length(ip.Results.dest));
+                opts = ip.Results.options;
+                if (~isempty(ip.Results.exclude))
+                    opts = sprintf('%s --exclude ''%s''', opts, ip.Results.exclude);
+                end
+                if (~ip.Results.includeListmode)
+                    opts = sprintf('%s --exclude *-Converted*', opts);
+                end
                 s = {}; r = {};
                 for c = 1:length(ip.Results.src)
                     [s1,r1] = CHPC.rsync( ...
                         ip.Results.src{c}, ...
                         ip.Results.dest{c}, ...
                         'chpcIsSource', ip.Results.chpcIsSource, ...
-                        'options',      ip.Results.options);
+                        'options',      opts);
                     s = [s s1]; %#ok<*AGROW>
                     r = [r r1];
                 end
