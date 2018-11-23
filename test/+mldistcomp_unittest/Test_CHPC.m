@@ -72,8 +72,8 @@ classdef Test_CHPC < matlab.unittest.TestCase
 
  	methods (TestMethodSetup)
 		function setupCHPCTest(this)
-            this.test4dfp      =         'fdgv2r2_op_fdgv2e1to4r1_frame4_sumt.4dfp.ifh';
-            this.test4dfpDated = sprintf('fdgv2r2_op_fdgv2e1to4r1_frame4_sumt_%s.4dfp.ifh', datestr(now,30));
+            this.test4dfp      =         'fdgv2r2_op_fdgv2e1to4r1_frame4_sumt.4dfp.hdr';
+            this.test4dfpDated = sprintf('fdgv2r2_op_fdgv2e1to4r1_frame4_sumt_%s.4dfp.hdr', datestr(now,30));
             copyfile( ...
                 fullfile(this.sessd.tracerLocation, this.test4dfp), ...
                 fullfile(this.sessd.tracerLocation, this.test4dfpDated));
