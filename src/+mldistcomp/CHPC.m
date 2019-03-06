@@ -145,7 +145,7 @@ classdef CHPC
             csd = this.chpcSessionData;
             sd  = this.sessionData;
             try
-                this.rsync(fullfile(sd.vLocation, src), fullfile(csd.vLocation, targ));
+                this.rsync(fullfile(sd.sessionPath, src), fullfile(csd.sessionPath, targ));
             catch ME
                 dispexcept(ME);
             end
@@ -156,7 +156,7 @@ classdef CHPC
             sd  = this.sessionData;
             
             try
-                this.rsync(fullfile(csd.vLocation, src), fullfile(sd.vLocation, targ), 'chpcIsSource', true);
+                this.rsync(fullfile(csd.sessionPath, src), fullfile(sd.sessionPath, targ), 'chpcIsSource', true);
             catch ME
                 dispexcept(ME);
             end

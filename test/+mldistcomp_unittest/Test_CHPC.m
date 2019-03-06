@@ -35,7 +35,7 @@ classdef Test_CHPC < matlab.unittest.TestCase
         end
 		function test_pushData(this)
  			import mldistcomp.*;
-            pwd0 = pushd(this.testObj.sessionData.vLocation);
+            pwd0 = pushd(this.testObj.sessionData.sessionPath);
             this.testObj.pushData( ...
                 ['FDG_V2-AC/' this.test4dfpDated], ...
                  'FDG_V2-AC');
@@ -45,7 +45,7 @@ classdef Test_CHPC < matlab.unittest.TestCase
  		end
 		function test_pullData(this)
  			import mldistcomp.*;
-            pwd0 = pushd(this.testObj.sessionData.vLocation);
+            pwd0 = pushd(this.testObj.sessionData.sessionPath);
             this.testObj.pullData( ...
                 ['FDG_V2-AC/' this.test4dfp], ...
                  'FDG_V2-AC');
@@ -63,7 +63,7 @@ classdef Test_CHPC < matlab.unittest.TestCase
             this.sessd = mlraichle.SessionData('studyData', studyd, 'sessionPath', sessp, 'vnumber', 2, 'ac', true);
  			this.testObj_ = CHPC('sessionData', this.sessd);
             
-            this.pwd0_ = pushd(this.testObj_.sessionData.vLocation);
+            this.pwd0_ = pushd(this.testObj_.sessionData.sessionPath);
             this.testFile = ['testFile_' datestr(now, 30) '.touch'];
             mlbash(['touch ' this.testFile])
  			this.addTeardown(@this.cleanFiles);
