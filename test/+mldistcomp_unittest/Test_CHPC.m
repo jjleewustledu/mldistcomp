@@ -59,7 +59,7 @@ classdef Test_CHPC < matlab.unittest.TestCase
 		function setupCHPC(this)
  			import mldistcomp.*;
             studyd = mlraichle.StudyData;
-            sessp = fullfile(mlraichle.RaichleRegistry.instance.subjectsDir, 'HYGLY28', '');
+            sessp = fullfile(mlraichle.StudyRegistry.instance.subjectsDir, 'HYGLY28', '');
             this.sessd = mlraichle.SessionData('studyData', studyd, 'sessionPath', sessp, 'ac', true);
  			this.testObj_ = CHPC('sessionData', this.sessd);
             
