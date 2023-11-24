@@ -109,7 +109,7 @@ classdef CHPC
         end 
         
         function subjD = repSubjectsDir(obj)
-            if (isa(obj, 'mlpipeline.SessionData'))
+            if (isa(obj, 'mlpipeline.ISessionData'))
                 obj = obj.subjectsDir;
             end
             import mldistcomp.*;
@@ -133,7 +133,7 @@ classdef CHPC
         end
         
         function this = set.chpcSessionData(this, s)
-            assert(isa(s, 'mlpipeline.SessionData'));
+            assert(isa(s, 'mlpipeline.ISessionData'));
             this.chpcSessionData_ = s;
             this.chpcSessionData_.subjectsDir = this.repSubjectsDir(this.chpcSessionData_);            
         end
@@ -195,7 +195,7 @@ classdef CHPC
             %  @param theDeployedDirector is some director.
             %  @param distcompHost is a valid argument for parcluster; cf.
             %  file:///Users/jjlee/Documents/MATLAB/GettingStartedWithSerialAndParallelMATLABonCHPC.pdf
-            %  @param sessionData is an mlpipeline.SessionData.
+            %  @param sessionData is an mlpipeline.ISessionData.
             %  @param subjectsDirModScratch := subjectsDir - (subjectsDir && this.SCRATCH_LOCATION)
             
             ip = inputParser;
@@ -203,7 +203,7 @@ classdef CHPC
             addParameter(ip, 'distcompHost', 'chpc_remote_r2016b', @ischar);
             addParameter(ip, 'memUsage', '32000', @ischar);
             addParameter(ip, 'wallTime', '23:00:00', @ischar);
-            addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.SessionData') || isempty(x));
+            addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData') || isempty(x));
             addParameter(ip, 'subjectsDirModScratch', this.SUBJECTS_DIR_MOD_SCRATCH, @ischar);
             parse(ip, varargin{:});
  			

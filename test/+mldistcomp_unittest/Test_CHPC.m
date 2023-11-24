@@ -65,7 +65,7 @@ classdef Test_CHPC < matlab.unittest.TestCase
             
             this.pwd0_ = pushd(this.testObj_.sessionData.sessionPath);
             this.testFile = ['testFile_' datestr(now, 30) '.touch'];
-            mlbash(['touch ' this.testFile])
+            mlbash(strcat('touch ', this.testFile))
  			this.addTeardown(@this.cleanFiles);
  		end
 	end
